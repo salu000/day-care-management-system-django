@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+
+{% block title %}Main Dashboard{% endblock %}
+
+{% block content %}
+    <h1 class="fw-bold mb-4">🏠 Dashboard Overview</h1>
+    <p class="lead text-muted">A snapshot of today's key activities and metrics.</p>
+
+    <div class="row g-4">
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm h-100 border-start border-5 border-primary">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase text-muted">Total Students</h5>
+                    <h2 class="card-text fw-bold">125</h2>
+                    <p class="text-success small mb-0"><i class="bi bi-arrow-up-right"></i> 5% since last month</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm h-100 border-start border-5 border-success">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase text-muted">Staff On Duty</h5>
+                    <h2 class="card-text fw-bold">18 / 20</h2>
+                    <p class="text-danger small mb-0"><i class="bi bi-arrow-down-right"></i> 2 Absences Today</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm h-100 border-start border-5 border-warning">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase text-muted">Pending Bills</h5>
+                    <h2 class="card-text fw-bold">$4,500</h2>
+                    <p class="text-muted small mb-0">Total unpaid amount</p>
+                </div>
+            </div>
+        </div>
+
+         <div class="col-lg-3 col-md-6">
+            <div class="card shadow-sm h-100 border-start border-5 border-info">
+                <div class="card-body">
+                    <h5 class="card-title text-uppercase text-muted">New Admissions (This Week)</h5>
+                    <h2 class="card-text fw-bold">3</h2>
+                    <p class="text-primary small mb-0">Pending enrollment review</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row mt-5">
+        <div class="col-12">
+             <div class="card shadow-sm p-4">
+                <h4 class="card-title">Attendance Summary (Last 7 Days)</h4>
+                <div style="height: 300px; background-color: #eee; text-align: center; line-height: 300px; color: #666;">
+                    [Placeholder for Chart JS or other graphing library]
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

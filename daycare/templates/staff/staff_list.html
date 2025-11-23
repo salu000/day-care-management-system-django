@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Staff Management{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h1 class="fw-bold">Teachers & Staff 🧑‍🏫</h1>
+        <button class="btn btn-primary"><i class="bi bi-person-plus-fill me-2"></i> Add New Staff</button>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h5 class="card-title mb-3">Current Staff Members (20 Total)</h5>
+
+         <div class="row g-3">
+            <div class="col-md-4">
+                <div class="card h-100 border-start border-4 border-primary">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <img src="{% static 'images/placeholder_female.png' %}" alt="Profile" class="rounded-circle me-3" style="width: 60px; height: 60px;">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Ms. Emily Clark</h6>
+                                <p class="text-muted small mb-0">Lead Pre-K Teacher</p>
+                            </div>
+                        </div>
+                        <p class="mt-3 small mb-1"><i class="bi bi-envelope me-2"></i>emily.c@daycarepro.com</p>
+                        <p class="small mb-0"><i class="bi bi-phone me-2"></i>(555) 123-4567</p>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-sm btn-outline-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card h-100 border-start border-4 border-success">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <img src="{% static 'images/placeholder_male.png' %}" alt="Profile" class="rounded-circle me-3" style="width: 60px; height: 60px;">
+                            <div>
+                                <h6 class="mb-0 fw-bold">Mr. David Lee</h6>
+                                <p class="text-muted small mb-0">Toddler Classroom Assistant</p>
+                            </div>
+                        </div>
+                         <p class="mt-3 small mb-1"><i class="bi bi-envelope me-2"></i>david.l@daycarepro.com</p>
+                        <p class="small mb-0"><i class="bi bi-phone me-2"></i>(555) 987-6543</p>
+                        <div class="mt-3 text-end">
+                            <button class="btn btn-sm btn-outline-secondary">Details</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            </div>
+    </div>
+{% endblock %}

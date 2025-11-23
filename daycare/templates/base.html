@@ -1,0 +1,243 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Dashboard - Day Care Pro{% endblock %}</title>
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="Icon" type="image/x-icon" href="{% static 'images/favicon.ico' %}">
+
+    <!-- Custom Dashboard Styling -->
+    <style>
+        :root {
+            --sidebar-width: 280px;
+            --sidebar-bg: #1e293b; /* Dark Slate Blue/Black */
+            --sidebar-color: #f8fafc; /* Light Text */
+            --primary-color: #3b82f6; /* A clean blue for highlights */
+            --danger-color: #dc3545; /* Red for logout */
+        }
+
+        /* 1. Sidebar Styles */
+        .sidebar {
+            width: var(--sidebar-width);
+            background-color: var(--sidebar-bg);
+            color: var(--sidebar-color);
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 100vh;
+            padding: 0;
+            z-index: 1030;
+            /* Ensure the sidebar itself is the flex container for content + footer */
+            display: flex; 
+            flex-direction: column;
+        }
+
+        .sidebar .nav-link {
+            color: var(--sidebar-color);
+            padding: 1rem 1.5rem;
+            transition: background-color 0.2s, color 0.2s;
+        }
+        
+        /* Active/Hover states */
+        .sidebar .nav-link:hover,
+        /* The .active class is now conditionally applied via Django template logic */
+        .sidebar .nav-link.active { 
+            background-color: rgba(255, 255, 255, 0.1);
+            color: var(--primary-color);
+            border-left: 5px solid var(--primary-color);
+            padding-left: calc(1.5rem - 5px); /* Adjust padding due to border */
+        }
+
+        .sidebar .nav-link.active {
+            font-weight: bold;
+        }
+
+        .sidebar .dropdown-toggle::after {
+            float: right;
+            margin-top: 0.5em;
+        }
+        
+        .sidebar-brand {
+            padding: 1.5rem;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        /* Styling for the Logout/Footer area */
+        .sidebar-footer {
+            margin-top: auto; /* Pushes the footer to the bottom */
+            padding: 1.5rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .btn-logout-custom {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: white;
+            transition: background-color 0.2s;
+        }
+        .btn-logout-custom:hover {
+            background-color: #c82333; /* Darker red on hover */
+            border-color: #c82333;
+            color: white;
+        }
+        
+        /* 2. Main Content Area Styling */
+        .main-content {
+            margin-left: var(--sidebar-width); /* Push content to the right */
+            padding: 20px;
+            min-height: 100vh;
+            background-color: #f9fafb;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="d-flex">
+        
+        <!-- ======================================================= -->
+        <!-- LEFT SIDEBAR NAVIGATION -->
+        <!-- ======================================================= -->
+        <div class="sidebar shadow-lg">
+            
+            <!-- Brand/Logo Area -->
+            <div class="sidebar-brand">
+                <img src="{% static 'images/daycare_logo.png' %}" alt="Logo" class="me-3" style="width: 40px; height: 40px; border-radius: 50%;">
+                <h5 class="m-0 fw-bold">Day Care Pro</h5>
+            </div>
+
+            <!-- Navigation List (Use flex-grow-1 to take up remaining space) -->
+            <ul class="nav flex-column mt-3 flex-grow-1">
+                
+                <!-- 1. Home / Dashboard -->
+                <li class="nav-item">
+                    {% url 'dashboard:index' as dashboard_url %}
+                    <a class="nav-link {% if request.path == dashboard_url %}active{% endif %}" href="{{ dashboard_url }}">
+                        <i class="bi bi-house-door-fill me-3"></i> Home / Dashboard
+                    </a>
+                </li>
+                
+              
+
+                <!-- 2. Guardians -->
+                <li class="nav-item">
+                    {% url 'guardians:guardian_list' as guardians_url %}
+                    <a class="nav-link {% if request.path|slice:":10" == '/guardians' %}active{% endif %}" href="{{ guardians_url }}">
+                        <i class="bi bi-heart-fill me-3"></i> Guardians
+                    </a>
+                </li>
+                
+                <!-- 3. Children Dropdown (Active if any Children path is active) -->
+                <li class="nav-item">
+                    <a class="nav-link dropdown-toggle {% if request.path|slice:":9" == '/children' %}active{% endif %}" 
+                       href="#" 
+                       data-bs-toggle="collapse" 
+                       data-bs-target="#children-submenu" 
+                       aria-expanded="{% if request.path|slice:":9" == '/children' %}true{% else %}false{% endif %}">
+                        <i class="bi bi-people-fill me-3"></i> Childrens
+                    </a>
+                    <div class="collapse {% if request.path|slice:":9" == '/children' %}show{% endif %}" id="children-submenu">
+                        <ul class="nav flex-column ms-4">
+                            <!-- All Students -->
+                            <li class="nav-item">
+                                {% url 'children:all_students' as all_students_url %}
+                                <a class="nav-link {% if request.path == all_students_url %}active{% endif %}" href="{{ all_students_url }}">
+                                    <i class="bi bi-chevron-right me-3"></i> All Students
+                                </a>
+                            </li>
+                            <!-- Admission Form -->
+                            <li class="nav-item">
+                                {% url 'children:admission_form' as admission_url %}
+                                <a class="nav-link {% if request.path == admission_url %}active{% endif %}" href="{{ admission_url }}">
+                                    <i class="bi bi-chevron-right me-3"></i> Admission Form
+                                </a>
+                            </li>                         
+                        </ul>
+                    </div>
+                </li>
+                
+                  <!-- 2. Staff / Teachers -->
+                <li class="nav-item">
+                    <a class="nav-link {% if request.path|slice:":6" == '/staff' %}active{% endif %}" href="{% url 'staff:staff_list' %}">
+                        <i class="bi bi-person-badge-fill me-3"></i> Staff / Teachers
+                    </a>
+                </li>
+                <hr class="text-secondary mx-3">
+
+                <!-- 5. Payments / Billing -->
+                <li class="nav-item">
+                    {% url 'billings:billing_view' as billing_url %}
+                    <a class="nav-link {% if request.path|slice:":8" == '/billing' %}active{% endif %}" href="{{ billing_url }}">
+                        <i class="bi bi-credit-card-fill me-3"></i> Payments / Billing
+                    </a>
+                </li>
+
+                <!-- 6. Users / Settings and Profile -->
+                <li class="nav-item">
+                    {% url 'users:users_list' as user_list %}
+                    <a class="nav-link {% if request.path == user_list %}active{% endif %}" href="{{ user_list }}">
+                        <i class="bi bi-gear-fill me-3"></i> Users / Settings
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- Sidebar Footer with Logout Button -->
+            <div class="sidebar-footer">
+                {% url 'users:user_logout' as logout_url %}
+                <a href="{{ logout_url }}" class="btn btn-logout-custom w-100 fw-semibold">
+                    <i class="bi bi-box-arrow-right me-2"></i> Logout
+                </a>
+            </div>
+        </div>
+        
+        <!-- ======================================================= -->
+        <!-- MAIN CONTENT AREA -->
+        <!-- ======================================================= -->
+        <div class="main-content flex-grow-1">
+            
+            <div class="container-fluid">
+                {% block content %}
+                    <h1 class="mb-4">Welcome to the Day Care Pro Dashboard</h1>
+                    <p class="lead">Select an item from the navigation menu to begin managing your facility.</p>
+                {% endblock %}
+            </div>
+            
+        </div>
+        
+    </div>
+
+    <!-- Bootstrap JS Bundle -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Optional: Block for custom scripts in child templates -->
+    {% block extra_js %}{% endblock %}
+    
+    <script>
+        // JS is no longer strictly necessary for dropdown but kept for compatibility
+        document.addEventListener('DOMContentLoaded', function () {
+            const dropdownToggle = document.querySelector('.sidebar .dropdown-toggle');
+            if (dropdownToggle && !dropdownToggle.dataset.bsToggle) { 
+                dropdownToggle.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const targetId = this.dataset.bsTarget;
+                    const targetElement = document.querySelector(targetId);
+                    if (targetElement) {
+                        targetElement.classList.toggle('show');
+                    }
+                });
+            }
+        });
+    </script>
+
+</body>
+</html>

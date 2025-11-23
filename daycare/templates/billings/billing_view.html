@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Billing and Invoicing{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h1 class="fw-bold">Billing & Payments 💵</h1>
+        <button class="btn btn-success"><i class="bi bi-receipt me-2"></i> Create New Invoice</button>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-4 h-100">
+                <h5 class="card-title text-primary">Billing Summary</h5>
+                <ul class="list-group list-group-flush mt-3">
+                    <li class="list-group-item d-flex justify-content-between">
+                        Total Unpaid: <span class="fw-bold text-danger">$7,200</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        Invoices Due (Next 7 Days): <span class="fw-bold">15</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        Last Payment Received: <span>$650.00</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card shadow-sm p-4">
+                <h5 class="card-title">Pending Invoices</h5>
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle">
+                        <thead>
+                            <tr>
+                                <th>Invoice ID</th>
+                                <th>Guardian</th>
+                                <th>Amount</th>
+                                <th>Due Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>INV-0045</td>
+                                <td>S. Johnson</td>
+                                <td>$750.00</td>
+                                <td>2025-11-30</td>
+                                <td><button class="btn btn-sm btn-info text-white">Send Reminder</button></td>
+                            </tr>
+                            <tr>
+                                <td>INV-0046</td>
+                                <td>M. Rodriguez</td>
+                                <td>$825.00</td>
+                                <td>2025-12-05</td>
+                                <td><button class="btn btn-sm btn-info text-white">Send Reminder</button></td>
+                            </tr>
+                             </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

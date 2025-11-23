@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}All Students List{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h1 class="fw-bold">All Students 👦👧</h1>
+        <a href="{% url 'children:admission_form' %}" class="btn btn-primary">
+            <i class="bi bi-plus-lg me-2"></i> New Admission
+        </a>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h5 class="card-title mb-3">Student Records (125 Total)</h5>
+        
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Search by name or ID...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option selected>Filter by Class</option>
+                    <option>Pre-K</option>
+                    <option>Toddlers</option>
+                    <option>Infants</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100">Export CSV</button>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Name</th>
+                        <th>Class</th>
+                        <th>Guardian</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>#1001</td>
+                        <td>Alice Johnson</td>
+                        <td>Pre-K</td>
+                        <td>Sarah Johnson</td>
+                        <td><span class="badge bg-success">Active</span></td>
+                        <td><button class="btn btn-sm btn-outline-info">View</button></td>
+                    </tr>
+                    <tr>
+                        <td>#1002</td>
+                        <td>Benny Smith</td>
+                        <td>Toddlers</td>
+                        <td>David Smith</td>
+                        <td><span class="badge bg-warning text-dark">Pending</span></td>
+                        <td><button class="btn btn-sm btn-outline-info">View</button></td>
+                    </tr>
+                    </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}

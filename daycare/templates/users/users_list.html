@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}User Account Management{% endblock %}
+
+{% block content %}
+    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+        <h1 class="fw-bold">User Accounts 👤</h1>
+        
+        <!-- Button for creating a new general user account or admin -->
+        <button class="btn btn-success">
+            <i class="bi bi-person-plus-fill me-2"></i> Add New User
+        </button>
+    </div>
+
+    <div class="card shadow-sm p-4">
+        <h5 class="card-title mb-4">System User Roster (5 Total)</h5>
+
+        <!-- Search and Filter Bar -->
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <input type="text" class="form-control" placeholder="Search by username or role...">
+            </div>
+            <div class="col-md-3">
+                <select class="form-select">
+                    <option selected>Filter by Role</option>
+                    <option>Admin</option>
+                    <option>Manager</option>
+                    <option>Staff</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <button class="btn btn-outline-secondary w-100">Export List</button>
+            </div>
+        </div>
+
+        <!-- User Accounts Table -->
+        <div class="table-responsive">
+            <table class="table table-hover align-middle">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Last Login</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>admin_user</td>
+                        <td>admin@daycarepro.com</td>
+                        <td><span class="badge bg-danger">Administrator</span></td>
+                        <td>2025-11-22</td>
+                        <td><span class="badge bg-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>jane_m</td>
+                        <td>jane.m@daycarepro.com</td>
+                        <td><span class="badge bg-primary">Manager</span></td>
+                        <td>2025-11-21</td>
+                        <td><span class="badge bg-success">Active</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info">Edit</button>
+                            <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                        </td>
+                    </tr>
+                    <!-- More users here -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+{% endblock %}
