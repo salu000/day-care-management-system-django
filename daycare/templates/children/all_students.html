@@ -3,6 +3,21 @@
 {% block title %}All Students List{% endblock %}
 
 {% block content %}
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 1055;">
+        {% if messages %}
+            {% for message in messages %}
+            <div class="toast show align-items-center text-white bg-{{ message.tags|yesno:'success,danger' }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-check-circle-fill me-2"></i> {{ message }}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
         <h1 class="fw-bold">All Students 👦👧</h1>
         <a href="{% url 'children:admission_form' %}" class="btn btn-primary">
@@ -11,30 +26,33 @@
     </div>
 
     <div class="card shadow-sm p-4">
-        <h5 class="card-title mb-3">Student Records (125 Total)</h5>
+        <h5 class="card-title mb-3">Student Records ({{ total_count }} Total)</h5>
         
-        <div class="row mb-4">
+        <form method="GET" class="row mb-4">
             <div class="col-md-6">
-                <input type="text" class="form-control" placeholder="Search by name or ID...">
+                <input type="text" name="q" value="{{ request.GET.q|default:'' }}" class="form-control" placeholder="Search by name or ID (e.g. #1001)...">
             </div>
             <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>Filter by Class</option>
-                    <option>Pre-K</option>
-                    <option>Toddlers</option>
-                    <option>Infants</option>
+                <select name="class_idx" class="form-select" onchange="this.form.submit()">
+                    <option>Filter by Class</option>
+                    <option {% if active_filter == 'Pre-K' %}selected{% endif %}>Pre-K</option>
+                    <option {% if active_filter == 'Toddlers' %}selected{% endif %}>Toddlers</option>
+                    <option {% if active_filter == 'Infants' %}selected{% endif %}>Infants</option>
                 </select>
             </div>
             <div class="col-md-3">
-                <button class="btn btn-outline-secondary w-100">Export CSV</button>
+                <button type="submit" name="export" value="csv" class="btn btn-outline-secondary w-100">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Export CSV
+                </button>
             </div>
-        </div>
+        </form>
 
         <div class="table-responsive">
             <table class="table table-hover align-middle">
                 <thead>
                     <tr>
                         <th>ID</th>
+                        <th>Photo</th>
                         <th>Name</th>
                         <th>Class</th>
                         <th>Guardian</th>
@@ -43,24 +61,252 @@
                     </tr>
                 </thead>
                 <tbody>
+                    {% for student in students %}
                     <tr>
-                        <td>#1001</td>
-                        <td>Alice Johnson</td>
-                        <td>Pre-K</td>
-                        <td>Sarah Johnson</td>
-                        <td><span class="badge bg-success">Active</span></td>
-                        <td><button class="btn btn-sm btn-outline-info">View</button></td>
+                        <td class="fw-bold text-secondary">{{ student.get_student_id }}</td>
+                        <td>
+                            {% if student.photo %}
+                                <img src="{{ student.photo.url }}" alt="img" class="rounded-circle" width="40" height="40" style="object-fit:cover;">
+                            {% else %}
+                                <div class="rounded-circle bg-light d-flex align-items-center justify-content-center text-muted" style="width:40px; height:40px; font-size: 12px;">N/A</div>
+                            {% endif %}
+                        </td>
+                        <td>{{ student.full_name }}</td>
+                        <td>{{ student.enrollment_class }}</td>
+                        <td>{{ student.guardian.name }}</td>
+                        <td>
+                            {% if student.status == 'Active' %}
+                                <span class="badge bg-success">Active</span>
+                            {% elif student.status == 'Pending' %}
+                                <span class="badge bg-warning text-dark">Pending</span>
+                            {% else %}
+                                <span class="badge bg-danger">Left</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-info view-student-btn" 
+                                    data-url="{% url 'children:student_detail_ajax' student.id %}"
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#studentModal">
+                                <i class="bi bi-eye"></i> View
+                            </button>
+                        </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td>#1002</td>
-                        <td>Benny Smith</td>
-                        <td>Toddlers</td>
-                        <td>David Smith</td>
-                        <td><span class="badge bg-warning text-dark">Pending</span></td>
-                        <td><button class="btn btn-sm btn-outline-info">View</button></td>
+                        <td colspan="7" class="text-center py-4 text-muted">No students found matching your criteria.</td>
                     </tr>
-                    </tbody>
+                    {% endfor %}
+                </tbody>
             </table>
         </div>
     </div>
+
+    <div class="modal fade" id="studentModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Student Details</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body" id="modal-content-area">
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 1. Initialize Toasts (Make them disappear after 5s)
+            var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+            var toastList = toastElList.map(function (toastEl) {
+                return new bootstrap.Toast(toastEl, { delay: 5000 })
+            })
+
+            const modalBody = document.getElementById('modal-content-area');
+            const buttons = document.querySelectorAll('.view-student-btn');
+
+            // 2. Click Handler for View Buttons
+            buttons.forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const url = this.getAttribute('data-url');
+                    
+                    // Reset modal content to spinner
+                    modalBody.innerHTML = `
+                        <div class="text-center py-5">
+                            <div class="spinner-border text-primary" role="status"></div>
+                        </div>`;
+
+                    // Fetch the form content
+                    fetch(url)
+                        .then(response => response.json())
+                        .then(data => {
+                            modalBody.innerHTML = data.html;
+                            attachFormSubmitListener(url); // Re-attach listener to new form
+                        });
+                });
+            });
+
+            // 3. Attach Submit Listener to the AJAX Form
+            function attachFormSubmitListener(url) {
+                const form = document.getElementById('update-student-form');
+                if(form) {
+                    form.addEventListener('submit', function(e) {
+                        e.preventDefault();
+                        
+                        // Show "Saving..." on button
+                        const btn = form.querySelector('button[type="submit"]');
+                        const originalText = btn.innerHTML;
+                        btn.innerHTML = 'Saving...';
+                        btn.disabled = true;
+
+                        const formData = new FormData(form);
+                        
+                        fetch(url, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.status === 'success') {
+                                // SUCCESS: Reload the page. 
+                                // Django will see the success message in the session and render the Toast.
+                                location.reload(); 
+                            } else {
+                                // ERROR
+                                btn.innerHTML = originalText;
+                                btn.disabled = false;
+                                alert('Error updating. Please check fields.');
+                            }
+                        })
+                        .catch(err => {
+                            console.error(err);
+                            alert('Network error occurred.');
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                        });
+                    });
+                }
+            }
+        });
+    </script>
+
+    <script>
+    // 1. Define Global Toggle Function
+    // This allows the modal buttons to find this function even after AJAX load
+    window.toggleDelete = function(show) {
+        const editSec = document.getElementById('edit-section');
+        const delSec = document.getElementById('delete-section');
+        
+        if(show) {
+            editSec.classList.add('d-none');
+            delSec.classList.remove('d-none');
+        } else {
+            editSec.classList.remove('d-none');
+            delSec.classList.add('d-none');
+        }
+    };
+
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize Toasts
+        var toastElList = [].slice.call(document.querySelectorAll('.toast'))
+        var toastList = toastElList.map(function (toastEl) {
+            return new bootstrap.Toast(toastEl, { delay: 5000 })
+        })
+
+        const modalBody = document.getElementById('modal-content-area');
+        const buttons = document.querySelectorAll('.view-student-btn');
+
+        buttons.forEach(btn => {
+            btn.addEventListener('click', function() {
+                const url = this.getAttribute('data-url');
+                
+                // Show Spinner
+                modalBody.innerHTML = `
+                    <div class="text-center py-5">
+                        <div class="spinner-border text-primary" role="status"></div>
+                    </div>`;
+
+                // Fetch Form
+                fetch(url)
+                    .then(response => response.json())
+                    .then(data => {
+                        modalBody.innerHTML = data.html;
+                        
+                        // --- RE-INITIALIZE LOGIC AFTER AJAX LOAD ---
+                        attachFormSubmitListener(url);
+                        attachImagePreviewListeners();
+                    });
+            });
+        });
+
+        // Helper: Attach Image Previews
+        function attachImagePreviewListeners() {
+            // Because we used prefix='child' and prefix='guardian', Django creates specific IDs
+            const childInput = document.getElementById('id_child-photo');
+            const guardInput = document.getElementById('id_guardian-photo');
+
+            if (childInput) {
+                childInput.onchange = function(evt) {
+                    const [file] = this.files;
+                    if (file) document.getElementById('preview-child').src = URL.createObjectURL(file);
+                };
+            }
+            if (guardInput) {
+                guardInput.onchange = function(evt) {
+                    const [file] = this.files;
+                    if (file) document.getElementById('preview-guardian').src = URL.createObjectURL(file);
+                };
+            }
+        }
+
+        // Helper: Form Submit
+        function attachFormSubmitListener(url) {
+            const form = document.getElementById('update-student-form');
+            if(form) {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    
+                    const btn = form.querySelector('button[type="submit"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = 'Saving...';
+                    btn.disabled = true;
+
+                    const formData = new FormData(form);
+                    
+                    fetch(url, {
+                        method: 'POST',
+                        body: formData,
+                        headers: {
+                            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if(data.status === 'success') {
+                            location.reload(); 
+                        } else {
+                            btn.innerHTML = originalText;
+                            btn.disabled = false;
+                            alert('Error updating. Please check fields.');
+                            console.error(data.errors);
+                        }
+                    })
+                    .catch(err => {
+                        console.error(err);
+                        alert('Network error occurred.');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                    });
+                });
+            }
+        }
+    });
+</script>
 {% endblock %}

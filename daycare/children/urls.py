@@ -1,16 +1,17 @@
 from django.urls import path
+from django.conf import settings
+from django.conf.urls.static import static
 from . import views
 
 app_name = 'children'
 
 urlpatterns = [
-    # Mapped to /children/students/all/
     path('', views.all_students, name='all_students'),
-    path('students/all/', views.all_students, name='all_students'),
-    # Mapped to /children/students/admission/
     path('students/admission/', views.admission_form, name='admission_form'),
-    # Mapped to /children/students/promotion/
     path('students/promotion/', views.student_promotion, name='student_promotion'),
-    # Mapped to /children/classes/
     path('classes/', views.class_list, name='class_list'),
-]
+    
+    # AJAX / Modal Actions
+    path('student/<int:pk>/detail/', views.student_detail_ajax, name='student_detail_ajax'),
+    path('student/<int:pk>/delete/', views.student_delete, name='student_delete'),
+] 
