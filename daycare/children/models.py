@@ -30,7 +30,7 @@ class Child(models.Model):
         ('Pending', 'Pending'),
         ('Left', 'Left'),
     ]
-
+    default_daily_rate = models.DecimalField(max_digits=6, decimal_places=2, default=0.00, help_text="Standard daily charge for this student")
     guardian = models.ForeignKey(Guardian, on_delete=models.CASCADE, related_name='children')
     full_name = models.CharField(max_length=100)
     dob = models.DateField(verbose_name="Date of Birth")

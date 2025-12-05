@@ -4,62 +4,377 @@
 {% block title %}Billing and Invoicing{% endblock %}
 
 {% block content %}
-    <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h1 class="fw-bold">Billing & Payments 💵</h1>
-        <button class="btn btn-success"><i class="bi bi-receipt me-2"></i> Create New Invoice</button>
-    </div>
+<div class="container-fluid py-4">
 
-    <div class="row g-4">
+   <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
+    <h1 class="fw-bold">Billing & Payments 💵</h1>
+    <div>
+        <button class="btn btn-outline-primary me-2" data-bs-toggle="modal" data-bs-target="#ratesModal">
+            <i class="bi bi-gear"></i> Set Daily Rates
+        </button>
+        
+        <button class="btn btn-success" data-bs-toggle="modal" data-bs-target="#generateModal">
+            <i class="bi bi-plus-circle me-2"></i> Create New Invoice
+        </button>
+    </div>
+</div>
+
+    <div class="row g-4 mb-4">
         <div class="col-lg-4">
-            <div class="card shadow-sm p-4 h-100">
-                <h5 class="card-title text-primary">Billing Summary</h5>
-                <ul class="list-group list-group-flush mt-3">
-                    <li class="list-group-item d-flex justify-content-between">
-                        Total Unpaid: <span class="fw-bold text-danger">$7,200</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        Invoices Due (Next 7 Days): <span class="fw-bold">15</span>
-                    </li>
-                    <li class="list-group-item d-flex justify-content-between">
-                        Last Payment Received: <span>$650.00</span>
-                    </li>
-                </ul>
+            <div class="card shadow-sm p-4 h-100 border-start border-5 border-danger">
+                <h5 class="card-title text-muted">Total Unpaid</h5>
+                <h2 class="text-danger fw-bold">${{ total_unpaid|floatformat:2 }}</h2>
             </div>
         </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-4 h-100 border-start border-5 border-warning">
+                <h5 class="card-title text-muted">Due Soon (7 Days)</h5>
+                <h2 class="text-dark fw-bold">{{ due_soon }} Invoices</h2>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="card shadow-sm p-4 h-100 border-start border-5 border-success">
+                <h5 class="card-title text-muted">Cash Flow</h5>
+                <p class="mb-0">Keep track of incoming payments here.</p>
+            </div>
+        </div>
+    </div>
 
-        <div class="col-lg-8">
-            <div class="card shadow-sm p-4">
-                <h5 class="card-title">Pending Invoices</h5>
-                <div class="table-responsive">
-                    <table class="table table-hover align-middle">
-                        <thead>
-                            <tr>
-                                <th>Invoice ID</th>
-                                <th>Guardian</th>
-                                <th>Amount</th>
-                                <th>Due Date</th>
-                                <th>Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>INV-0045</td>
-                                <td>S. Johnson</td>
-                                <td>$750.00</td>
-                                <td>2025-11-30</td>
-                                <td><button class="btn btn-sm btn-info text-white">Send Reminder</button></td>
-                            </tr>
-                            <tr>
-                                <td>INV-0046</td>
-                                <td>M. Rodriguez</td>
-                                <td>$825.00</td>
-                                <td>2025-12-05</td>
-                                <td><button class="btn btn-sm btn-info text-white">Send Reminder</button></td>
-                            </tr>
-                             </tbody>
-                    </table>
+    <div class="card shadow-sm">
+        <div class="card-header bg-white py-3">
+            <h5 class="mb-0">Invoice History</h5>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Invoice ID</th>
+                        <th>Student</th>
+                        <th>Period</th>
+                        <th>Amount</th>
+                        <th>Paid</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for inv in invoices %}
+                    <tr>
+                        <td>#INV-{{ inv.id }}</td>
+                        <td class="fw-bold">{{ inv.child.full_name }}</td>
+                        <td class="small text-muted">{{ inv.period_start }} to {{ inv.period_end }}</td>
+                        <td>${{ inv.total_amount }}</td>
+                        <td class="text-success">${{ inv.amount_paid }}</td>
+                        <td>
+                            {% if inv.status == 'PAID' %}
+                                <span class="badge bg-success">Paid</span>
+                            {% elif inv.status == 'PARTIAL' %}
+                                <span class="badge bg-warning text-dark">Partial</span>
+                            {% else %}
+                                <span class="badge bg-danger">Unpaid</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="openInvoiceModal({{ inv.id }})">
+                                View / Pay
+                            </button>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="7" class="text-center py-4">No invoices found.</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="generateModal" tabindex="-1">
+    <div class="modal-dialog">
+        <form method="POST" action="{% url 'billings:generate_invoice' %}">
+            {% csrf_token %}
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Generate New Invoice</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Select Student</label>
+                        <select name="child_id" class="form-select" required>
+                            <option value="">-- Select --</option>
+                            {% for child in children %}
+                            <option value="{{ child.id }}">{{ child.full_name }} (Rate: ${{ child.default_daily_rate }})</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="row">
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Period Start</label>
+                            <input type="date" name="start_date" class="form-control" required>
+                        </div>
+                        <div class="col-6 mb-3">
+                            <label class="form-label">Period End</label>
+                            <input type="date" name="end_date" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Due Date</label>
+                        <input type="date" name="due_date" class="form-control" required>
+                    </div>
+                    <div class="alert alert-info small">
+                        <i class="bi bi-info-circle"></i> Amount will be calculated automatically based on Attendance records and the student's daily rate.
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-primary">Generate Invoice</button>
                 </div>
             </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="invoiceDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-light">
+                <h5 class="modal-title" id="modalTitle">Invoice Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="detailsInvoiceId">
+                
+                <div class="row mb-4 border-bottom pb-3">
+                    <div class="col-md-6">
+                        <h4 id="detailChildName" class="fw-bold text-primary"></h4>
+                        <p class="text-muted mb-0">Period: <span id="detailPeriod"></span></p>
+                    </div>
+                    <div class="col-md-6 text-end">
+                        <h2 id="detailBalance" class="text-danger fw-bold"></h2>
+                        <small>Balance Due</small>
+                    </div>
+                </div>
+
+                <div class="row g-3 mb-4 bg-light p-3 rounded">
+                    <div class="col-md-3">
+                        <label class="small text-muted">Days Present</label>
+                        <p class="fw-bold" id="detailDays"></p>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">Daily Rate</label>
+                        <p class="fw-bold" id="detailRate"></p>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">Base Amount</label>
+                        <p class="fw-bold" id="detailBase"></p>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="small text-muted">Paid So Far</label>
+                        <p class="fw-bold text-success" id="detailPaid"></p>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="col-md-6 border-end">
+                        <h6 class="fw-bold">Add Extra Charge / Discount</h6>
+                        <div class="mb-2">
+                            <label class="small">Amount (+/-)</label>
+                            <input type="number" id="detailAdjustment" class="form-control" step="0.01">
+                        </div>
+                        <div class="mb-2">
+                            <label class="small">Reason / Remarks</label>
+                            <input type="text" id="detailReason" class="form-control" placeholder="e.g. Late Fee, Book Charge">
+                        </div>
+                    </div>
+
+                    <div class="col-md-6 ps-4">
+                        <h6 class="fw-bold text-success">Receive Payment</h6>
+                        <div class="mb-2">
+                            <label class="small">Payment Amount</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" id="paymentInput" class="form-control" placeholder="0.00">
+                            </div>
+                        </div>
+                        <button onclick="submitUpdate()" class="btn btn-success w-100 mt-3">
+                            <i class="bi bi-cash-stack"></i> Save Payment & Changes
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer justify-content-between">
+                <div>
+                    <button class="btn btn-outline-danger" onclick="alert('PDF Generated!')"><i class="bi bi-file-pdf"></i> PDF</button>
+                    <button class="btn btn-outline-secondary" onclick="alert('Email Sent!')"><i class="bi bi-envelope"></i> Email Guardian</button>
+                </div>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="ratesModal" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Manage Student Daily Rates</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-light border small">
+                    <i class="bi bi-info-circle text-primary"></i> 
+                    Set the default price per day for each student here. This will be used when generating new invoices.
+                </div>
+                
+                <table class="table table-striped align-middle">
+                    <thead>
+                        <tr>
+                            <th>Student Name</th>
+                            <th>Class</th>
+                            <th style="width: 150px;">Daily Rate ($)</th>
+                            <th style="width: 100px;">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for child in children %}
+                        <tr>
+                            <td class="fw-bold">{{ child.full_name }}</td>
+                            <td class="text-muted small">{{ child.enrollment_class }}</td>
+                            <td>
+                                <input type="number" step="0.01" 
+                                       class="form-control" 
+                                       id="rate-input-{{ child.id }}" 
+                                       value="{{ child.default_daily_rate|floatformat:2 }}">
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-primary" onclick="saveRate({{ child.id }})">
+                                    Save
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // ... existing scripts ...
+
+    // NEW FUNCTION: Save Rate
+    function saveRate(childId) {
+        const rateInput = document.getElementById(`rate-input-${childId}`);
+        const newRate = rateInput.value;
+        const btn = event.target; // The save button clicked
+
+        // Visual feedback (Loading)
+        const originalText = btn.innerText;
+        btn.innerText = "...";
+        btn.disabled = true;
+
+        fetch("{% url 'billings:update_child_rate' %}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                child_id: childId,
+                rate: newRate
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            if (data.success) {
+                // Success Feedback
+                btn.classList.remove('btn-primary');
+                btn.classList.add('btn-success');
+                btn.innerText = "Saved!";
+                
+                // Reset button after 2 seconds
+                setTimeout(() => {
+                    btn.classList.remove('btn-success');
+                    btn.classList.add('btn-primary');
+                    btn.innerText = originalText;
+                }, 2000);
+            } else {
+                alert("Error saving rate");
+                btn.innerText = originalText;
+            }
+        });
+    }
+</script>
+
+<script>
+    const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    let currentInvoiceId = null;
+
+    // 1. OPEN MODAL & FETCH DATA
+    function openInvoiceModal(id) {
+        currentInvoiceId = id;
+        const modal = new bootstrap.Modal(document.getElementById('invoiceDetailModal'));
+        
+        // Fetch Details
+        fetch(`/billing/api/details/${id}/`)
+        .then(res => res.json())
+        .then(data => {
+            document.getElementById('detailsInvoiceId').value = data.id;
+            document.getElementById('detailChildName').innerText = data.child_name;
+            document.getElementById('detailPeriod').innerText = data.period;
+            
+            document.getElementById('detailDays').innerText = data.days;
+            document.getElementById('detailRate').innerText = '$' + data.rate;
+            document.getElementById('detailBase').innerText = '$' + data.base;
+            document.getElementById('detailPaid').innerText = '$' + data.paid;
+            
+            // Inputs
+            document.getElementById('detailAdjustment').value = data.adjustment;
+            document.getElementById('detailReason').value = data.reason;
+            document.getElementById('detailBalance').innerText = '$' + data.balance.toFixed(2);
+            
+            // Reset Payment Input
+            document.getElementById('paymentInput').value = '';
+
+            modal.show();
+        });
+    }
+
+    // 2. SUBMIT PAYMENT OR ADJUSTMENT
+    function submitUpdate() {
+        const payment = document.getElementById('paymentInput').value;
+        const adj = document.getElementById('detailAdjustment').value;
+        const reason = document.getElementById('detailReason').value;
+
+        fetch("{% url 'billings:update_payment' %}", {
+            method: "POST",
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                invoice_id: currentInvoiceId,
+                payment_amount: payment,
+                adjustment_amount: adj,
+                adjustment_reason: reason
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // Refresh to see new status totals
+            } else {
+                alert("Error updating invoice");
+            }
+        });
+    }
+</script>
+
 {% endblock %}
