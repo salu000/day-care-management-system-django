@@ -26,10 +26,8 @@ def daily_attendance_view(request):
         # Get all active children
         # Assuming your Child model has 'is_active' or similar. If not, remove the filter.
         active_children = Child.objects.all() 
-        print(active_children)
         # Check which children already have attendance for this date
         existing_records = Attendance.objects.filter(date=current_date).values_list('child_id', flat=True)
-        print(existing_records)
         # Create 'Absent' records for missing children
         new_attendance_objects = []
         for child in active_children:
