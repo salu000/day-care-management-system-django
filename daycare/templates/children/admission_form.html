@@ -20,11 +20,12 @@
         <form method="POST" enctype="multipart/form-data">
             {% csrf_token %}
             
-            <h4 class="mb-4 text-primary">Child Information</h4>
-            <div class="row g-3 mb-4">
+            <h4 class="mb-4 text-primary">1. Child Information</h4>
+            <div class="row g-3 mb-5">
                 <div class="col-md-6">
                     <label class="form-label">Full Name</label>
                     {{ c_form.full_name }}
+                    <div class="text-danger small">{{ c_form.full_name.errors }}</div>
                 </div>
                 <div class="col-md-6">
                     <label class="form-label">Date of Birth</label>
@@ -52,33 +53,100 @@
                 </div>
             </div>
 
-            <h4 class="mb-4 text-primary mt-5">Guardian Information</h4>
-            <div class="row g-3 mb-4">
-                <div class="col-md-6">
-                    <label class="form-label">Guardian Name</label>
-                    {{ g_form.name }}
-                </div>
-                <div class="col-md-6">
-                    <label class="form-label">Phone Number</label>
-                    {{ g_form.phone }}
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Email Address</label>
-                    {{ g_form.email }}
-                </div>
-                <div class="col-12">
-                    <label class="form-label">Address</label>
-                    {{ g_form.address }}
-                </div>
-                <div class="col-md-12">
-                    <label class="form-label">Guardian Photo</label>
-                    {{ g_form.photo }}
+            <h4 class="mb-3 text-primary">2. Guardian Information</h4>
+            
+            <div class="bg-light p-3 rounded mb-4">
+                <label class="form-label fw-bold mb-2">Is the guardian new or already registered?</label>
+                <div class="btn-group w-100" role="group">
+                    <input type="radio" class="btn-check" name="guardian_mode" id="mode_new" value="new" checked autocomplete="off">
+                    <label class="btn btn-outline-primary" for="mode_new">
+                        <i class="bi bi-person-plus-fill me-2"></i> New Guardian
+                    </label>
+                  
+                    <input type="radio" class="btn-check" name="guardian_mode" id="mode_existing" value="existing" autocomplete="off">
+                    <label class="btn btn-outline-success" for="mode_existing">
+                        <i class="bi bi-person-check-fill me-2"></i> Existing Guardian
+                    </label>
                 </div>
             </div>
 
-            <button type="submit" class="btn btn-success mt-4 py-2 px-5">
-                <i class="bi bi-save me-2"></i> Save Admission
+            <div id="new-guardian-section">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <label class="form-label">Guardian Name</label>
+                        {{ g_form.name }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label">Phone Number</label>
+                        {{ g_form.phone }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Email Address</label>
+                        {{ g_form.email }}
+                    </div>
+                    <div class="col-12">
+                        <label class="form-label">Address</label>
+                        {{ g_form.address }}
+                    </div>
+                    <div class="col-md-12">
+                        <label class="form-label">Guardian Photo</label>
+                        {{ g_form.photo }}
+                    </div>
+                </div>
+            </div>
+
+            <div id="existing-guardian-section" class="d-none">
+                <div class="mb-4">
+                    <label class="form-label">Select Registered Guardian</label>
+                    <select class="form-select form-select-lg" name="existing_guardian_id" id="existing-select">
+                        <option value="" selected>-- Search and Select Parent --</option>
+                        {% for g in all_guardians %}
+                            <option value="{{ g.id }}">{{ g.name }} ({{ g.phone }})</option>
+                        {% endfor %}
+                    </select>
+                    <div class="form-text">If the parent is listed here, you don't need to fill out their address again.</div>
+                </div>
+            </div>
+
+            <button type="submit" class="btn btn-success mt-4 py-2 px-5 w-100 fw-bold">
+                <i class="bi bi-check-circle-fill me-2"></i> Complete Admission
             </button>
         </form>
     </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const radioNew = document.getElementById('mode_new');
+            const radioExisting = document.getElementById('mode_existing');
+            const sectionNew = document.getElementById('new-guardian-section');
+            const sectionExisting = document.getElementById('existing-guardian-section');
+            const existingSelect = document.getElementById('existing-select');
+            
+            // Guardian Form Inputs (to toggle 'required' attribute logic if needed, 
+            // though backend handles validation now)
+            const newInputs = sectionNew.querySelectorAll('input');
+
+            function toggleMode() {
+                if(radioNew.checked) {
+                    sectionNew.classList.remove('d-none');
+                    sectionExisting.classList.add('d-none');
+                    // Enable New Guardian inputs
+                    newInputs.forEach(input => input.disabled = false);
+                    existingSelect.disabled = true;
+                } else {
+                    sectionNew.classList.add('d-none');
+                    sectionExisting.classList.remove('d-none');
+                    // Disable New Guardian inputs so they don't submit empty data
+                    newInputs.forEach(input => input.disabled = true);
+                    existingSelect.disabled = false;
+                }
+            }
+
+            radioNew.addEventListener('change', toggleMode);
+            radioExisting.addEventListener('change', toggleMode);
+
+            // Run once on load
+            toggleMode();
+        });
+    </script>
 {% endblock %}

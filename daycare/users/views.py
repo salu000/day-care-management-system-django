@@ -1,5 +1,5 @@
 from django.shortcuts import render, redirect
-from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth import authenticate, login, logout 
 
 def Index(request):
     return render(request, 'login.html')
@@ -19,6 +19,7 @@ def Login(request):
 
 
 def Logout(request):
+    logout(request)
     return redirect('users:login')
 
 def users_list(request):
