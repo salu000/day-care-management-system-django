@@ -29,7 +29,9 @@ urlpatterns = [
     path('staff/', include('staff.urls')),
     path('children/', include('children.urls')),
     path('guardians/', include('guardians.urls')),
-    path('billing/', include('billings.urls')),    
+    path('billing/', include('billings.urls')),
+    path('attendance/', include('attendance.urls')),
+    path('events/', include('events.urls')),    
     ] 
 
 if settings.DEBUG:

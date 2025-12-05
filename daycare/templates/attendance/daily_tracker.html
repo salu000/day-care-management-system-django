@@ -1,0 +1,157 @@
+{% extends 'base.html' %} {% block content %}
+<div class="container-fluid py-4">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>Attendance Tracker</h2>
+        <form method="GET" class="d-flex align-items-center gap-2">
+            <label>Date:</label>
+            <input type="date" name="date" class="form-control" value="{{ current_date }}" onchange="this.form.submit()">
+        </form>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4">Student Name</th>
+                        <th>Status</th>
+                        <th>Check In</th>
+                        <th>Check Out</th>
+                        <th>Status Display</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_list %}
+                    <tr id="row-{{ record.id }}" class="{% if record.status == 'ABSENT' %}table-danger{% elif record.status == 'PRESENT' %}table-success{% else %}table-warning{% endif %} bg-opacity-10">
+                        
+                        <td class="ps-4 fw-bold">
+                            {{ record.child.full_name }}                   
+                        </td>
+                        <td>
+                            <div class="btn-group" role="group">
+                                <button type="button" 
+                                    class="btn btn-sm {% if record.status == 'PRESENT' %}btn-success{% else %}btn-outline-success{% endif %}"
+                                    onclick="updateStatus({{ record.id }}, 'PRESENT')">P</button>
+                                
+                                <button type="button" 
+                                    class="btn btn-sm {% if record.status == 'ABSENT' %}btn-danger{% else %}btn-outline-danger{% endif %}"
+                                    onclick="updateStatus({{ record.id }}, 'ABSENT')">A</button>
+                                
+                                <button type="button" 
+                                    class="btn btn-sm {% if record.status == 'LEAVE' %}btn-warning{% else %}btn-outline-warning{% endif %}"
+                                    onclick="updateStatus({{ record.id }}, 'LEAVE')">L</button>
+                            </div>
+                        </td>
+
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   value="{{ record.check_in_time|time:'H:i' }}" 
+                                   onblur="updateTime({{ record.id }}, 'check_in_time', this.value)"
+                                   style="width: 110px;">
+                        </td>
+
+                        <td>
+                            <input type="time" class="form-control form-control-sm" 
+                                   value="{{ record.check_out_time|time:'H:i' }}" 
+                                   onblur="updateTime({{ record.id }}, 'check_out_time', this.value)"
+                                   style="width: 110px;">
+                        </td>
+
+                        <td>
+                            <span class="badge rounded-pill {% if record.status == 'PRESENT' %}bg-success{% elif record.status == 'ABSENT' %}bg-danger{% else %}bg-warning text-dark{% endif %}" id="badge-{{ record.id }}">
+                                {{ record.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-4">No students found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Helper to get CSRF token
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+
+    const csrftoken = getCookie('csrftoken');
+
+    // Update Status (Present/Absent/Leave)
+    function updateStatus(id, status) {
+        sendUpdate(id, 'status', status);
+        
+        // Update UI immediately for better UX
+        const row = document.getElementById(`row-${id}`);
+        const badge = document.getElementById(`badge-${id}`);
+        
+        // Update Row Color
+        row.classList.remove('table-danger', 'table-success', 'table-warning');
+        badge.classList.remove('bg-danger', 'bg-success', 'bg-warning', 'text-dark');
+        
+        if(status === 'PRESENT') {
+            row.classList.add('table-success');
+            badge.classList.add('bg-success');
+            badge.innerText = 'Present';
+        } else if (status === 'ABSENT') {
+            row.classList.add('table-danger');
+            badge.classList.add('bg-danger');
+            badge.innerText = 'Absent';
+        } else {
+            row.classList.add('table-warning');
+            badge.classList.add('bg-warning', 'text-dark');
+            badge.innerText = 'On Leave';
+        }
+
+        // Reload to update button states (Optional, or use JS to toggle classes)
+        // location.reload(); 
+        // Better: Use JS to toggle button classes manually if you want to avoid reload
+    }
+
+    // Update Time
+    function updateTime(id, field, value) {
+        sendUpdate(id, field, value);
+    }
+
+    // API Call
+    function sendUpdate(id, field, value) {
+        fetch("{% url 'attendance:update_attendance_api' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify({
+                id: id,
+                field: field,
+                value: value
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(!data.success) {
+                alert('Error updating attendance');
+            } else {
+                console.log("Saved");
+            }
+        });
+    }
+</script>
+{% endblock %}

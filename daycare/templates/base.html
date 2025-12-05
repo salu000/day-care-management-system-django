@@ -148,20 +148,29 @@
                     </a>
                     <div class="collapse {% if request.path|slice:":9" == '/children' %}show{% endif %}" id="children-submenu">
                         <ul class="nav flex-column ms-4">
-                            <!-- All Students -->
-                            <li class="nav-item">
-                                {% url 'children:all_students' as all_students_url %}
-                                <a class="nav-link {% if request.path == all_students_url %}active{% endif %}" href="{{ all_students_url }}">
-                                    <i class="bi bi-chevron-right me-3"></i> All Students
-                                </a>
-                            </li>
-                            <!-- Admission Form -->
-                            <li class="nav-item">
-                                {% url 'children:admission_form' as admission_url %}
-                                <a class="nav-link {% if request.path == admission_url %}active{% endif %}" href="{{ admission_url }}">
-                                    <i class="bi bi-chevron-right me-3"></i> Admission Form
-                                </a>
-                            </li>                         
+                           <!-- All Students -->
+                        <li class="nav-item">
+                            {% url 'children:all_students' as all_students_url %}
+                            <a class="nav-link {% if request.path == all_students_url %}active{% endif %}" href="{{ all_students_url }}">
+                                <i class="bi bi-people-fill me-3"></i> All Students
+                            </a>
+                        </li>
+
+                        <!-- Admission Form -->
+                        <li class="nav-item">
+                            {% url 'children:admission_form' as admission_url %}
+                            <a class="nav-link {% if request.path == admission_url %}active{% endif %}" href="{{ admission_url }}">
+                                <i class="bi bi-file-earmark-text me-3"></i> Admission Form
+                            </a>
+                        </li>
+                        <!-- Attendance Tracker -->                     
+                          <li class="nav-item">
+                            {% url 'attendance:daily_tracker' as attendance_url %}
+                            <a class="nav-link {% if request.path == attendance_url %}active{% endif %}" href="{{ attendance_url }}">
+                                <i class="bi bi-calendar-check me-3"></i> Attendance
+                            </a>
+                          </li>
+                
                         </ul>
                     </div>
                 </li>

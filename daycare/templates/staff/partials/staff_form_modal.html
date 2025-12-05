@@ -1,0 +1,103 @@
+<form id="staff-form" method="POST" enctype="multipart/form-data" 
+      action="{% if staff %}{% url 'staff:staff_update' staff.id %}{% else %}{% url 'staff:staff_create' %}{% endif %}">
+    {% csrf_token %}
+    
+    <div class="row g-3">
+        <div class="col-md-12 text-center mb-3">
+            <img id="preview-photo" 
+                 src="{% if staff and staff.photo %}{{ staff.photo.url }}{% else %}https://via.placeholder.com/100{% endif %}" 
+                 class="rounded-circle border" width="100" height="100" style="object-fit: cover;">
+            <div class="mt-2">
+                {{ form.photo }}
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">First Name</label>
+            {{ form.first_name }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Last Name</label>
+            {{ form.last_name }}
+        </div>
+        
+        <div class="col-md-6">
+            <label class="form-label">Role/Profession</label>
+            {{ form.role }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Gender</label>
+            {{ form.gender }}
+        </div>
+
+        <div class="col-md-6">
+            <label class="form-label">Email</label>
+            {{ form.email }}
+        </div>
+        <div class="col-md-6">
+            <label class="form-label">Phone</label>
+            {{ form.phone }}
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Father/Spouse Name</label>
+            {{ form.father_spouse_name }}
+        </div>
+
+        <div class="col-md-12">
+            <label class="form-label">Address</label>
+            {{ form.address }}
+        </div>
+
+        <div class="col-md-4">
+            <label class="form-label">Salary</label>
+            {{ form.salary }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Join Date</label>
+            {{ form.date_joined }}
+        </div>
+        <div class="col-md-4">
+            <label class="form-label">Status</label>
+            {{ form.status }}
+        </div>
+    </div>
+
+    <div class="modal-footer px-0 mt-4">
+        {% if staff %}
+            <button type="button" class="btn btn-danger me-auto" onclick="confirmDelete()">
+                <i class="bi bi-trash"></i> Delete Staff
+            </button>
+        {% endif %}
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-primary">Save Changes</button>
+    </div>
+</form>
+
+{% if staff %}
+<form id="delete-form" action="{% url 'staff:staff_delete' staff.id %}" method="POST" class="d-none">
+    {% csrf_token %}
+</form>
+<script>
+    function confirmDelete() {
+        if(confirm('Are you sure you want to delete this staff member? This action cannot be undone.')) {
+            document.getElementById('delete-form').submit();
+        }
+    }
+</script>
+{% endif %}
+
+<script>
+    // Image Preview Script
+    document.getElementById('id_photo').onchange = function (evt) {
+        var tgt = evt.target || window.event.srcElement,
+            files = tgt.files;
+        if (FileReader && files && files.length) {
+            var fr = new FileReader();
+            fr.onload = function () {
+                document.getElementById('preview-photo').src = fr.result;
+            }
+            fr.readAsDataURL(files[0]);
+        }
+    }
+</script>

@@ -44,6 +44,9 @@ INSTALLED_APPS = [
     'billings',
     'guardians',
     'users',
+    'events',
+    'attendance',
+    
 ]
 
 MIDDLEWARE = [
