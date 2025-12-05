@@ -1,11 +1,15 @@
 from django.shortcuts import render, get_object_or_404, redirect
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.db.models import Sum, Q
 from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 from django.views.decorators.http import require_POST
+from django.template.loader import get_template # Changed for xhtml2pdf
 import json
 from datetime import datetime, timedelta
+
+# NEW LIBRARY (Easier for Windows)
+from xhtml2pdf import pisa 
 
 from .models import Invoice
 from children.models import Child
@@ -45,11 +49,10 @@ def generate_invoice(request):
         
         child = get_object_or_404(Child, id=child_id)
         
-        # DEBUGGING: Print to console to see what is happening
+        # DEBUGGING
         print(f"Generating for: {child.full_name} ({start_date} to {end_date})")
         
         # 1. Calculate Attendance Count
-        # We ensure dates are strings 'YYYY-MM-DD' which Django handles well
         attendance_records = Attendance.objects.filter(
             child=child,
             date__range=[start_date, end_date],
@@ -91,7 +94,7 @@ def get_invoice_details(request, invoice_id):
     data = {
         'id': invoice.id,
         'child_name': invoice.child.full_name,
-        'guardian_email': invoice.child.guardian.email, # Assuming relationship exists
+        'guardian_email': invoice.child.guardian.email, 
         'period': f"{invoice.period_start} to {invoice.period_end}",
         'days': invoice.total_days_present,
         'rate': float(invoice.daily_rate_applied),
@@ -104,8 +107,6 @@ def get_invoice_details(request, invoice_id):
         'status': invoice.status,
     }
     return JsonResponse(data)
-
-# In billings/views.py
 
 def safe_float(value):
     """Helper to convert string to float safely, handling empty strings."""
@@ -124,13 +125,12 @@ def update_invoice_payment(request):
         data = json.loads(request.body)
         invoice_id = data.get('invoice_id')
         
-        # Check if ID exists
         if not invoice_id:
              return JsonResponse({'success': False, 'error': 'No Invoice ID provided'}, status=400)
 
         invoice = get_object_or_404(Invoice, id=invoice_id)
         
-        # 1. Handle Payment (Use safe_float helper)
+        # 1. Handle Payment
         payment_input = data.get('payment_amount')
         payment_amount = safe_float(payment_input)
         
@@ -152,13 +152,13 @@ def update_invoice_payment(request):
         return JsonResponse({'success': True})
 
     except Exception as e:
-        print(f"Error in update_invoice_payment: {e}") # Check your terminal for this print if it fails again
+        print(f"Error in update_invoice_payment: {e}") 
         return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
 @login_required
 @require_POST
 def update_child_rate(request):
-    """AJAX endpoint to update a student's daily rate"""
+    """API to update student daily rate from the Dashboard UI"""
     try:
         data = json.loads(request.body)
         child_id = data.get('child_id')
@@ -171,3 +171,34 @@ def update_child_rate(request):
         return JsonResponse({'success': True})
     except Exception as e:
         return JsonResponse({'success': False, 'error': str(e)}, status=400)
+
+@login_required
+def invoice_pdf_view(request, invoice_id):
+    """Generates a PDF for a specific invoice using xhtml2pdf"""
+    invoice = get_object_or_404(Invoice, id=invoice_id)
+    
+    template_path = 'billings/invoice_pdf.html'
+    context = {
+        'invoice': invoice,
+        'user': request.user,
+    }
+    
+    # Create a Django response object, and specify content_type as pdf
+    response = HttpResponse(content_type='application/pdf')
+    # Change 'inline' to 'attachment' if you want to force download instead of viewing
+    response['Content-Disposition'] = f'inline; filename="invoice_{invoice.id}.pdf"'
+    
+    # Find the template and render it.
+    template = get_template(template_path)
+    html = template.render(context)
+
+    # Create the PDF
+    pisa_status = pisa.CreatePDF(
+       html, dest=response
+    )
+
+    # If error
+    if pisa_status.err:
+       return HttpResponse('We had some errors <pre>' + html + '</pre>')
+       
+    return response

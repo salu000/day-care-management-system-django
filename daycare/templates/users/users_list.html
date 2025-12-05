@@ -5,72 +5,82 @@
 
 {% block content %}
     <div class="d-flex justify-content-between align-items-center mb-4 border-bottom pb-3">
-        <h1 class="fw-bold">User Accounts 👤</h1>
+        <div>
+            <h1 class="fw-bold">User Accounts 👤</h1>
+            <p class="text-muted mb-0">View system access details.</p>
+        </div>
         
-        <!-- Button for creating a new general user account or admin -->
-        <button class="btn btn-success">
-            <i class="bi bi-person-plus-fill me-2"></i> Add New User
-        </button>
+        <a href="/admin/" target="_blank" class="btn btn-primary">
+            <i class="bi bi-shield-lock-fill me-2"></i> Go to Admin Panel
+        </a>
     </div>
 
     <div class="card shadow-sm p-4">
-        <h5 class="card-title mb-4">System User Roster (5 Total)</h5>
+        <h5 class="card-title mb-4">System User Roster ({{ users.count }} Total)</h5>
 
-        <!-- Search and Filter Bar -->
-        <div class="row mb-4">
-            <div class="col-md-6">
-                <input type="text" class="form-control" placeholder="Search by username or role...">
-            </div>
-            <div class="col-md-3">
-                <select class="form-select">
-                    <option selected>Filter by Role</option>
-                    <option>Admin</option>
-                    <option>Manager</option>
-                    <option>Staff</option>
-                </select>
-            </div>
-            <div class="col-md-3">
-                <button class="btn btn-outline-secondary w-100">Export List</button>
-            </div>
+        <div class="alert alert-light border small">
+            <i class="bi bi-info-circle-fill text-primary me-2"></i>
+            <strong>Note:</strong> User creation, password resets, and role updates are handled exclusively in the Django Admin Panel.
         </div>
 
-        <!-- User Accounts Table -->
         <div class="table-responsive">
             <table class="table table-hover align-middle">
-                <thead>
+                <thead class="bg-light">
                     <tr>
                         <th>Username</th>
                         <th>Email</th>
                         <th>Role</th>
+                        <th>Date Joined</th>
                         <th>Last Login</th>
                         <th>Status</th>
-                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody>
+                    {% for user in users %}
                     <tr>
-                        <td>admin_user</td>
-                        <td>admin@daycarepro.com</td>
-                        <td><span class="badge bg-danger">Administrator</span></td>
-                        <td>2025-11-22</td>
-                        <td><span class="badge bg-success">Active</span></td>
+                        <td class="fw-bold">{{ user.username }}</td>
+                        
                         <td>
-                            <button class="btn btn-sm btn-outline-info">Edit</button>
-                            <button class="btn btn-sm btn-outline-danger">Deactivate</button>
+                            {% if user.email %}
+                                {{ user.email }}
+                            {% else %}
+                                <span class="text-muted small">No email</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if user.is_superuser %}
+                                <span class="badge bg-danger">Administrator</span>
+                            {% elif user.is_staff %}
+                                <span class="badge bg-primary">Staff</span>
+                            {% else %}
+                                <span class="badge bg-secondary">General User</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ user.date_joined|date:"M d, Y" }}</td>
+
+                        <td>
+                            {% if user.last_login %}
+                                {{ user.last_login|timesince }} ago
+                            {% else %}
+                                <span class="text-muted small">Never</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if user.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-warning text-dark">Inactive</span>
+                            {% endif %}
                         </td>
                     </tr>
+                    {% empty %}
                     <tr>
-                        <td>jane_m</td>
-                        <td>jane.m@daycarepro.com</td>
-                        <td><span class="badge bg-primary">Manager</span></td>
-                        <td>2025-11-21</td>
-                        <td><span class="badge bg-success">Active</span></td>
-                        <td>
-                            <button class="btn btn-sm btn-outline-info">Edit</button>
-                            <button class="btn btn-sm btn-outline-danger">Deactivate</button>
-                        </td>
+                        <td colspan="6" class="text-center py-4">No users found in the database.</td>
                     </tr>
-                    <!-- More users here -->
+                    {% endfor %}
                 </tbody>
             </table>
         </div>

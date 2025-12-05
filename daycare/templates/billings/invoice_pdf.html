@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice #{{ invoice.id }}</title>
+    <style>
+        @page { size: A4; margin: 2cm; }
+        body { font-family: 'Helvetica', sans-serif; color: #333; line-height: 1.5; font-size: 14px; }
+        
+        .header { border-bottom: 2px solid #444; padding-bottom: 20px; margin-bottom: 30px; display: flex; justify-content: space-between; }
+        .logo { font-size: 24px; font-weight: bold; color: #2c3e50; text-transform: uppercase; }
+        .company-info { font-size: 12px; color: #666; text-align: right; }
+        
+        .invoice-details { margin-bottom: 40px; }
+        .invoice-details table { width: 100%; }
+        .invoice-details td { vertical-align: top; }
+        
+        .bill-to { width: 50%; }
+        .meta-data { text-align: right; width: 50%; }
+        
+        .table-items { width: 100%; border-collapse: collapse; margin-bottom: 30px; }
+        .table-items th { background: #f4f4f4; border-bottom: 1px solid #ddd; padding: 10px; text-align: left; font-weight: bold; }
+        .table-items td { border-bottom: 1px solid #eee; padding: 10px; }
+        .text-right { text-align: right; }
+        
+        .totals { width: 100%; display: flex; justify-content: flex-end; }
+        .totals-table { width: 40%; margin-left: auto; border-collapse: collapse; }
+        .totals-table td { padding: 8px; border-bottom: 1px solid #eee; }
+        .totals-table .final { font-size: 16px; font-weight: bold; border-top: 2px solid #333; color: #000; }
+        
+        .footer { position: fixed; bottom: 0; left: 0; right: 0; font-size: 10px; text-align: center; color: #999; border-top: 1px solid #eee; padding-top: 10px; }
+        
+        /* Status Badge */
+        .stamp { 
+            position: absolute; top: 150px; right: 50px; 
+            font-size: 40px; font-weight: bold; color: #cc0000; 
+            border: 5px solid #cc0000; padding: 10px; opacity: 0.2; transform: rotate(-15deg); 
+        }
+        .stamp-paid { color: #008000; border-color: #008000; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="logo">Daycare Center</div>
+        <div class="company-info">
+            123 Education Lane<br>
+            Cityville, State 54321<br>
+            Phone: (555) 123-4567
+        </div>
+    </div>
+
+    <div style="margin-bottom: 20px;">
+        <h1 style="margin: 0; color: #2c3e50;">INVOICE</h1>
+    </div>
+
+    <div class="invoice-details">
+        <table>
+            <tr>
+                <td class="bill-to">
+                    <strong>BILL TO:</strong><br>
+                    {{ invoice.child.full_name }}<br>
+                    {% if invoice.child.guardian %}
+                        c/o {{ invoice.child.guardian.name }}<br>
+                        {{ invoice.child.guardian.email }}
+                    {% else %}
+                        Guardian Info Not Available
+                    {% endif %}
+                </td>
+                <td class="meta-data">
+                    <strong>Invoice #:</strong> INV-{{ invoice.id }}<br>
+                    <strong>Date:</strong> {{ invoice.created_at|date:"F d, Y" }}<br>
+                    <strong>Due Date:</strong> {{ invoice.due_date|date:"F d, Y" }}<br>
+                    <strong>Billing Period:</strong> {{ invoice.period_start }} to {{ invoice.period_end }}
+                </td>
+            </tr>
+        </table>
+    </div>
+
+    <table class="table-items">
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Quantity/Days</th>
+                <th class="text-right">Rate</th>
+                <th class="text-right">Amount</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Monthly Attendance Fees</td>
+                <td class="text-right">{{ invoice.total_days_present }} days</td>
+                <td class="text-right">${{ invoice.daily_rate_applied }}</td>
+                <td class="text-right">${{ invoice.base_amount }}</td>
+            </tr>
+            
+            {% if invoice.adjustment_amount != 0 %}
+            <tr>
+                <td>Adjustment: {{ invoice.adjustment_reason|default:"Miscellaneous" }}</td>
+                <td class="text-right">-</td>
+                <td class="text-right">-</td>
+                <td class="text-right">${{ invoice.adjustment_amount }}</td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <table class="totals-table">
+        <tr>
+            <td><strong>Subtotal:</strong></td>
+            <td class="text-right">${{ invoice.total_amount }}</td>
+        </tr>
+        <tr>
+            <td>Amount Paid:</td>
+            <td class="text-right text-success">(${{ invoice.amount_paid }})</td>
+        </tr>
+        <tr class="final">
+            <td>Balance Due:</td>
+            <td class="text-right">${{ invoice.get_balance_due|floatformat:2 }}</td>
+        </tr>
+    </table>
+
+    {% if invoice.status == 'PAID' %}
+        <div class="stamp stamp-paid">PAID</div>
+    {% elif invoice.status == 'UNPAID' %}
+        <div class="stamp">UNPAID</div>
+    {% endif %}
+
+    <div class="footer">
+        Generated on {% now "Y-m-d H:i" %} by System. Thank you for your business.
+    </div>
+
+</body>
+</html>
