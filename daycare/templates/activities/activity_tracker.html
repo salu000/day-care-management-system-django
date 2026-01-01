@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Daily Activity Tracker{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">Daily Activity Tracker 🧸</h2>
+        <span class="badge bg-light text-dark border p-2">
+            <i class="bi bi-calendar-event me-2"></i> {% now "l, F j, Y" %}
+        </span>
+    </div>
+
+    <div class="row g-3">
+        {% for item in child_data %}
+        <div class="col-12">
+            <div class="card shadow-sm border-0">
+                <div class="card-body d-flex align-items-start justify-content-between flex-wrap gap-3">
+                    
+                    <div class="d-flex align-items-center" style="min-width: 200px;">
+                        <div class="bg-primary bg-opacity-10 text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold me-3" style="width: 50px; height: 50px; font-size: 1.2rem;">
+                            {{ item.info.full_name|slice:":1" }}
+                        </div>
+                        <div>
+                            <h5 class="fw-bold mb-0">{{ item.info.full_name }}</h5>
+                            <small class="text-muted">{{ item.info.enrollment_class }}</small>
+                        </div>
+                    </div>
+
+                    <div class="btn-group shadow-sm">
+                        <button class="btn btn-outline-warning" onclick="openModal('{{ item.info.id }}', 'MEAL', 'Meal/Snack')">
+                            <i class="bi bi-egg-fried"></i> Meal
+                        </button>
+                        <button class="btn btn-outline-info" onclick="openModal('{{ item.info.id }}', 'NAP', 'Nap')">
+                            <i class="bi bi-moon-stars"></i> Nap
+                        </button>
+                        <button class="btn btn-outline-success" onclick="openModal('{{ item.info.id }}', 'DIAPER', 'Diaper')">
+                            <i class="bi bi-droplet"></i> Diaper
+                        </button>
+                        <button class="btn btn-outline-primary" onclick="openModal('{{ item.info.id }}', 'LEARNING', 'Learning')">
+                            <i class="bi bi-book"></i> Learn
+                        </button>
+                    </div>
+
+                    <div class="flex-grow-1 border-start ps-3 ms-3">
+                        <small class="text-muted text-uppercase fw-bold mb-2 d-block">Today's Timeline</small>
+                        <div class="d-flex gap-2 flex-wrap">
+                            {% for act in item.activities %}
+                            <div class="badge bg-light text-dark border p-2 text-start fw-normal" style="min-width: 120px;">
+                                <div class="fw-bold text-primary">
+                                    <i class="bi bi-clock"></i> {{ act.time|time:"H:i" }}
+                                </div>
+                                <div>{{ act.title }}</div>
+                                <small class="text-muted" style="font-size: 0.7em;">{{ act.description|truncatechars:15 }}</small>
+                            </div>
+                            {% empty %}
+                            <span class="text-muted small">No activities logged yet.</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12 text-center py-5 text-muted">No active students found.</div>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="modal fade" id="activityModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Log Activity: <span id="modalTypeDisplay"></span></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" id="modalChildId">
+                <input type="hidden" id="modalActivityCode">
+                
+                <div class="mb-3">
+                    <label class="form-label">Time</label>
+                    <input type="time" id="modalTime" class="form-control" value="{% now 'H:i' %}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Title</label>
+                    <input type="text" id="modalTitle" class="form-control" placeholder="e.g. Lunch, Diaper Change">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Details / Notes</label>
+                    <textarea id="modalDesc" class="form-control" rows="2" placeholder="e.g. Ate chicken and rice..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="saveActivity()">Save Log</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get CSRF Token
+    const csrftoken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+    
+    const modalElement = document.getElementById('activityModal');
+    const modal = new bootstrap.Modal(modalElement);
+
+    function openModal(childId, typeCode, typeName) {
+        document.getElementById('modalChildId').value = childId;
+        document.getElementById('modalActivityCode').value = typeCode;
+        document.getElementById('modalTypeDisplay').innerText = typeName;
+        
+        // Auto-fill title based on type for convenience
+        let defaultTitle = "";
+        if(typeCode === 'MEAL') defaultTitle = "Lunch";
+        if(typeCode === 'NAP') defaultTitle = "Afternoon Nap";
+        if(typeCode === 'DIAPER') defaultTitle = "Diaper Change";
+        document.getElementById('modalTitle').value = defaultTitle;
+        document.getElementById('modalDesc').value = "";
+        
+        modal.show();
+    }
+
+    function saveActivity() {
+        const btn = event.target;
+        btn.disabled = true;
+        btn.innerText = "Saving...";
+
+        const data = {
+            child_id: document.getElementById('modalChildId').value,
+            activity_type: document.getElementById('modalActivityCode').value,
+            title: document.getElementById('modalTitle').value,
+            description: document.getElementById('modalDesc').value,
+            time: document.getElementById('modalTime').value
+        };
+
+        fetch("{% url 'activities:add_api' %}", {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrftoken
+            },
+            body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+        .then(result => {
+            if(result.success) {
+                location.reload(); // Refresh to show new data
+            } else {
+                alert("Error: " + result.error);
+                btn.disabled = false;
+                btn.innerText = "Save Log";
+            }
+        });
+    }
+</script>
+{% endblock %}

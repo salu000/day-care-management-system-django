@@ -1,0 +1,26 @@
+<div class="list-group-item d-flex align-items-center py-3 border-start-0 border-end-0 
+    {% if item.color_theme == 'success' %}bg-success bg-opacity-10 border-success{% endif %}
+    {% if item.color_theme == 'warning' %}bg-warning bg-opacity-10 border-warning{% endif %}
+    {% if item.color_theme == 'info' %}bg-info bg-opacity-10 border-info{% endif %}
+    {% if item.color_theme == 'primary' %}bg-primary bg-opacity-10 border-primary{% endif %}
+    " style="border-left: 5px solid !important;">
+    
+    <div class="badge 
+        {% if item.color_theme == 'success' %}bg-success{% elif item.color_theme == 'warning' %}bg-warning text-dark{% elif item.color_theme == 'info' %}bg-info text-dark{% elif item.color_theme == 'primary' %}bg-primary{% else %}bg-secondary{% endif %} 
+        p-2 me-3" style="min-width: 85px; font-size: 0.9rem;">
+        {{ item.start_time|time:"h:i A" }}
+    </div>
+
+    <div class="flex-grow-1">
+        <span class="fw-bold text-dark">{{ item.title }}</span>
+        {% if item.subtitle %}
+            <span class="text-muted ms-1">{{ item.subtitle }}</span>
+        {% endif %}
+    </div>
+
+    {% if item.icon %}
+        <div class="text-muted">
+            <i class="bi {{ item.icon }}" style="font-size: 1.2rem;"></i>
+        </div>
+    {% endif %}
+</div>
